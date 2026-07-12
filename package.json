@@ -1,0 +1,22 @@
+{
+  "name": "creative-orchestrator",
+  "version": "1.0.0",
+  "description": "A from-scratch multi-agent orchestrator that turns a creative brief into brand-compliant marketing assets",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "demo": "tsx src/index.ts",
+    "build": "tsc"
+  },
+  "dependencies": {
+    "chalk": "^5.4.1",
+    "dotenv": "^17.2.0",
+    "openai": "^6.0.0",
+    "zod": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0"
+  }
+}

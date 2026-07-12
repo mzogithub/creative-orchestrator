@@ -1,0 +1,17 @@
+{
+  "name": "KAFO",
+  "tagline": "Slow brewed. Nothing else.",
+  "voice": ["calm", "precise", "quietly confident", "minimal"],
+  "toneNotes": "Short sentences. No hype and no hard sell. No exclamation marks, no emoji. Let the product speak.",
+  "bannedWords": ["smooth", "rich", "delicious", "indulge", "elevate", "artisanal", "game-changer"],
+  "colorPalette": ["#0F0F0F", "#F4F1EA", "#C8B08A"],
+  "rules": {
+    "mustMentionBrandName": true,
+    "maxCaptionLength": 220,
+    "noExclamationMarks": true,
+    "hashtags": {
+      "max": 2,
+      "mustInclude": ["#KAFO"]
+    }
+  }
+}
