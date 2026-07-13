@@ -7,7 +7,7 @@
  * The LLM creativity lives inside the agents; the routing between them does
  * not need to be smart.
  *
- * This is the same shape Monks.Flow and Adobe Firefly Workflow Builder use:
+ * This is the same shape enterprise creative-workflow platforms use:
  * nodes with clear contracts, composed into a governed graph.
  */
 import chalk from "chalk";

@@ -3,7 +3,7 @@
  *
  * It produces the PROMPT, not a real image. The generateImage tool is a
  * deterministic stub (see src/tools.ts); in production that one tool would
- * call Adobe Firefly Services and nothing about this agent would change.
+ * call a real image generation API and nothing about this agent would change.
  * Unlike the Copywriter, this role reads the brand spec up front, which is
  * why its assets usually pass review on the first try, a useful contrast
  * in the demo trace.

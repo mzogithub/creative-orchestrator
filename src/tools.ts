@@ -94,10 +94,11 @@ export function buildTools(store: AssetStore, brand: BrandSpec): Toolset {
   });
 
   // Stubbed on purpose. In production this is the node that calls a real
-  // image API (Adobe Firefly Services: submit a generation job, poll it,
-  // collect the rendition URLs). The stub returns a deterministic fake
-  // reference derived from the prompt, so the demo runs for free, needs no
-  // image service, and produces reproducible output.
+  // image generation API (submit a generation job, poll it, collect the
+  // rendition URLs). Any provider fits behind this one function. The stub
+  // returns a deterministic fake reference derived from the prompt, so the
+  // demo runs for free, needs no image service, and produces reproducible
+  // output.
   const generateImage = defineTool({
     name: "generateImage",
     description:
@@ -107,10 +108,10 @@ export function buildTools(store: AssetStore, brand: BrandSpec): Toolset {
     }),
     execute: (args) =>
       JSON.stringify({
-        imageRef: `firefly-stub://renders/${fauxHash(args.prompt)}.png`,
+        imageRef: `render-stub://renders/${fauxHash(args.prompt)}.png`,
         width: 2048,
         height: 2048,
-        note: "stubbed render, swap this tool for a real Firefly Services call in production",
+        note: "stubbed render, swap this tool for a real image generation API call in production",
       }),
   });
 

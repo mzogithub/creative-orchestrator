@@ -61,7 +61,7 @@ The key point: **the routing is code, not another LLM.** The pipeline shape (pla
 
 Because the loop **is** the product. Owning it means owning:
 
-- **The tools.** Each tool is a plain function with a zod schema. Swapping the stub image tool for a real Firefly Services call touches one function.
+- **The tools.** Each tool is a plain function with a zod schema. Swapping the stub image tool for a real image generation API call touches one function.
 - **The routing.** Handoffs, retries, and the revision loop are explicit code you can step through, not callbacks inside a framework's black box.
 - **The cost.** You see every request, every token, every loop iteration. You can cap steps, cap revision rounds, and pick the model per agent.
 - **The failure handling.** Malformed JSON gets validated and retried with feedback. A skipped tool call gets nudged. A tool error goes back to the model as text so it can self-correct. Frameworks hide exactly this part, and it is the part that matters in production.
@@ -98,7 +98,7 @@ examples/brief.json
 
 The revision loop is the centerpiece: the Copywriter is deliberately not given the brand rules up front, so its first drafts usually break one (an exclamation mark, a banned word like "smooth", a missing `#KAFO` hashtag). The BrandGuardian catches it, the orchestrator sends the asset back with the specific reasons, and the revised version is re-reviewed until it passes or the round budget runs out.
 
-Hard rules (banned words, length, hashtag count) are checked by deterministic code in the `lintAsset` tool; the LLM only judges what code cannot, whether the copy sounds like the brand. This node-based, governed composition mirrors how Monks.Flow and Adobe Firefly Workflow Builder compose creative workflows.
+Hard rules (banned words, length, hashtag count) are checked by deterministic code in the `lintAsset` tool; the LLM only judges what code cannot, whether the copy sounds like the brand. This node-based, governed composition mirrors how enterprise creative-workflow platforms compose creative workflows.
 
 ## How to run
 
@@ -120,11 +120,13 @@ The console shows the full trace (color-coded per agent: plan, tool calls, revie
 
 ## How it maps to production
 
-| This demo | Real Adobe / enterprise equivalent |
+The demo is provider-agnostic on purpose. Every stubbed node has a real enterprise equivalent (Adobe's stack shown as one example, since it is where this pattern is heading).
+
+| This demo | Enterprise equivalent (example) |
 |---|---|
-| stubbed `generateImage` tool | Adobe Firefly Services image generation API |
-| `brand.json` + BrandGuardian | brand governance, Adobe brand intelligence checks |
-| `src/orchestrator.ts` | Adobe Firefly Workflow Builder / Monks.Flow workflow graph |
+| stubbed `generateImage` tool | a hosted image generation API (e.g. Adobe Firefly Services, or any provider) |
+| `brand.json` + BrandGuardian | brand governance systems (e.g. Adobe Brand Intelligence checks) |
+| `src/orchestrator.ts` | a visual workflow engine (e.g. Adobe Firefly Workflow Builder, Monks.Flow) |
 | in-memory `AssetStore` | a DAM such as AEM Assets |
 | revision loop | automated QA gates plus human-in-the-loop review |
 | zod-validated agent output | node contracts between workflow steps |
