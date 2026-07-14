@@ -9,8 +9,57 @@
  */
 import { z } from "zod";
 import type OpenAI from "openai";
+import { mkdir, writeFile } from "node:fs/promises";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { defineTool, type Tool } from "./agent.js";
 import { AssetKindSchema, type Asset, type AssetKind, type BrandSpec } from "./types.js";
+
+/** Project root, resolved from this file so image output lands in the repo regardless of cwd. */
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+
+/**
+ * Call a real image generation API (Replicate, running Google's Nano Banana 2).
+ * This is the ONE function that touches an external render provider. Swapping
+ * providers (Firefly Services, Fal, Replicate, a local ComfyUI endpoint) means
+ * editing only this function; every agent and the orchestrator stay untouched.
+ * Returns the local path of the downloaded image, or null on any failure so the
+ * caller can fall back to the stub.
+ */
+async function generateWithReplicate(prompt: string): Promise<{ localPath: string; url: string } | null> {
+  const token = process.env.REPLICATE_API_TOKEN;
+  if (!token) return null;
+  try {
+    // Prefer: wait blocks until the prediction finishes (no manual polling loop).
+    const res = await fetch("https://api.replicate.com/v1/models/google/nano-banana-2/predictions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+        Prefer: "wait",
+      },
+      body: JSON.stringify({ input: { prompt, output_format: "png", aspect_ratio: "1:1" } }),
+    });
+    if (!res.ok) throw new Error(`Replicate HTTP ${res.status}: ${(await res.text()).slice(0, 160)}`);
+    const data = (await res.json()) as { output?: string | string[]; error?: string };
+    if (data.error) throw new Error(data.error);
+    const url = Array.isArray(data.output) ? data.output[0] : data.output;
+    if (!url) throw new Error("Replicate returned no image url");
+
+    // Download the rendition into the repo so the demo produces a real file on disk.
+    const imgRes = await fetch(url);
+    if (!imgRes.ok) throw new Error(`image download HTTP ${imgRes.status}`);
+    const bytes = Buffer.from(await imgRes.arrayBuffer());
+    const dir = path.join(ROOT, "output", "images");
+    await mkdir(dir, { recursive: true });
+    const localPath = path.join(dir, `${fauxHash(prompt)}.png`);
+    await writeFile(localPath, bytes);
+    return { localPath, url };
+  } catch {
+    // Any provider hiccup falls back to the stub so the pipeline never dies mid-demo.
+    return null;
+  }
+}
 
 /**
  * The shared asset store. Agents never talk to each other directly. They
@@ -93,26 +142,37 @@ export function buildTools(store: AssetStore, brand: BrandSpec): Toolset {
     execute: () => JSON.stringify(brand, null, 2),
   });
 
-  // Stubbed on purpose. In production this is the node that calls a real
-  // image generation API (submit a generation job, poll it, collect the
-  // rendition URLs). Any provider fits behind this one function. The stub
-  // returns a deterministic fake reference derived from the prompt, so the
-  // demo runs for free, needs no image service, and produces reproducible
-  // output.
+  // The one node that touches a real render provider. If REPLICATE_API_TOKEN
+  // is set, it calls Google's Nano Banana 2 on Replicate and downloads the
+  // actual image into output/images/. If no token is set, it falls back to a
+  // deterministic stub so the demo still runs offline and for free. Either way
+  // the rest of the system is identical: this is the whole point of owning the
+  // tool layer, the provider is one swappable function.
   const generateImage = defineTool({
     name: "generateImage",
     description:
-      "Render an image from a prompt and return an image reference. (Demo stub: no real image API is called.)",
+      "Render an image from a prompt and return an image reference. Uses a real image API (Replicate / Nano Banana 2) when configured, otherwise a deterministic demo stub.",
     parameters: z.object({
       prompt: z.string().describe("The full image generation prompt"),
     }),
-    execute: (args) =>
-      JSON.stringify({
+    execute: async (args) => {
+      const real = await generateWithReplicate(args.prompt);
+      if (real) {
+        return JSON.stringify({
+          imageRef: real.localPath,
+          sourceUrl: real.url,
+          provider: "replicate:google/nano-banana-2",
+          note: "real render downloaded to output/images/",
+        });
+      }
+      return JSON.stringify({
         imageRef: `render-stub://renders/${fauxHash(args.prompt)}.png`,
         width: 2048,
         height: 2048,
-        note: "stubbed render, swap this tool for a real image generation API call in production",
-      }),
+        provider: "stub",
+        note: "stubbed render (set REPLICATE_API_TOKEN to generate real images)",
+      });
+    },
   });
 
   // Hard rules are checked in code, not by the LLM. A model can overlook a

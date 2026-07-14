@@ -115,8 +115,9 @@ Configuration (all via `.env`, no secrets in the repo):
 | `LLM_API_KEY` | required | OpenRouter, OpenAI, xAI, any OpenAI-compatible key |
 | `LLM_BASE_URL` | `https://openrouter.ai/api/v1` | any OpenAI-compatible endpoint |
 | `LLM_MODEL` | `openai/gpt-4o-mini` | cheap and sufficient; a full run costs about a cent |
+| `REPLICATE_API_TOKEN` | optional | set it to generate real images (Google Nano Banana 2 on Replicate); leave empty to use the deterministic stub |
 
-The console shows the full trace (color-coded per agent: plan, tool calls, reviews, revision rounds), and the finished assets land in `output/assets.md`.
+The console shows the full trace (color-coded per agent: plan, tool calls, reviews, revision rounds), and the finished assets land in `output/assets.md`. When `REPLICATE_API_TOKEN` is set, real renders are downloaded into `output/images/`; otherwise the image node returns a stub reference so the demo still runs offline and for free.
 
 ## How it maps to production
 
